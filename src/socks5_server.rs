@@ -1,4 +1,4 @@
-use anyhow::{ensure, Context,bail,anyhow, Ok};
+use anyhow::{ensure, Context,bail,anyhow};
 use tokio::{io::{copy_bidirectional, self, AsyncReadExt,AsyncWriteExt}, net::{self,TcpStream, TcpSocket,lookup_host}};
 use log::{error,debug,warn};
 use std::net::SocketAddr;
@@ -41,20 +41,20 @@ fn authentication_method_name(id: u8) -> String {
     }
 }
 
-pub async fn handle_socks5_stream(mut s:TcpStream) -> anyhow::Result<()> {
-
-    verify_socks5(&mut s).await?;
+pub async fn handle_socks5_stream(mut s:TcpStream) {
     
     let addrs = tcp_stream_addrs(&s, false);
+    debug!("{addrs}");
 
-    // match verify_socks5(&mut s).await {
-    //     Ok(_) => println!(""),
-    //     Err(e) => {
-    //         error!("verify socks5 err {e} and exit");
-    //         return;
-    //     }
-    // }
-    Ok(())
+    match verify_socks5(&mut s).await {
+        Ok(()) => println!("verify ok"),
+        Err(e) => {
+            error!("verify socks5 err : {e}");
+            return;
+        }
+    }
+    
+    
 }
 
 async fn verify_socks5(s:&mut TcpStream) -> anyhow::Result<()> {
@@ -78,10 +78,11 @@ async fn verify_socks5(s:&mut TcpStream) -> anyhow::Result<()> {
             .collect::<Vec<_>>()
         );
     
-        
-
-
-    return Ok(());
+    ensure!(methods.contains(&0),"目前仅支持无验证模式！{:?}",methods);
+    
+    s.write(&[0x5,0x00]).await?;
+    
+    Ok(())
 }
 
 async fn get_target_stream(socket:&mut TcpStream) -> anyhow::Result<TcpStream> {

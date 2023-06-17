@@ -5,7 +5,7 @@ use tokio::{net::TcpSocket};
 use log::error;
 
 mod socks5_server;
-mod thread_pool;
+// mod thread_pool;
 
 #[warn(unused_must_use)]
 async  fn run_socks5_server() -> ! {
