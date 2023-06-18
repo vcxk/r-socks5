@@ -1,8 +1,7 @@
 use anyhow::{ensure, Context,bail,anyhow};
-use tokio::{io::{copy_bidirectional, self, AsyncReadExt,AsyncWriteExt, AsyncRead, AsyncWrite}, net::{self,TcpStream, TcpSocket,lookup_host}};
+use tokio::{io::{copy_bidirectional, self, AsyncReadExt,AsyncWriteExt, AsyncRead, AsyncWrite}, net::{self,TcpStream ,TcpSocket,UdpSocket,lookup_host}};
 use log::{error,debug,warn};
 use std::{net::{SocketAddr}, fmt::Error};
-
 
 const VERSION: u8 = 0x05;
 
@@ -124,7 +123,6 @@ async fn get_cmd_sock(socket: &mut TcpStream) -> anyhow::Result<TcpStream> {
             let socket2 = match addr {
                 SocketAddr::V4(_) => TcpSocket::new_v4().context("context")?,
                 SocketAddr::V6(_) => TcpSocket::new_v6().context("context")?,
-                _ => bail!("")
             };
             let tcp = socket2.connect(addr).await.context("context")?;
             tcp
@@ -132,7 +130,7 @@ async fn get_cmd_sock(socket: &mut TcpStream) -> anyhow::Result<TcpStream> {
         _ => bail!("invalid cmd {}",buf[1])
     };
     const ATYP_IP_V4: u8 = 0x01;
-    const ATYP_IP_V6: u8 = 0x04;
+    // const ATYP_IP_V6: u8 = 0x04;
     let mut buf = [0;256];
     buf[0] = VERSION;
     let reply = match addr {
@@ -152,7 +150,6 @@ async fn get_cmd_sock(socket: &mut TcpStream) -> anyhow::Result<TcpStream> {
             buf[20..22].copy_from_slice(&port);
             &buf[..22]
         }
-        _ => bail!("")
     };
     //回复的数据结构
     // +----+-----+-------+------+----------+----------+
